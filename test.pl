@@ -87,12 +87,30 @@ foreach my $rgb555 (@pallete) {
     $i++;
 }
 
+my $scale = 4;
+my $calcscale = $scale;
+$calcscale = 1/(-$calcscale) if($calcscale < 0);
 
-my $gif = GIF::Encoder::PP->new('example.gif', 16, 16, $PALETTE, 4, 0, $ti);
+my $w = 16 * $calcscale;
+my $h = 16 * $calcscale;
+
+my $gif = GIF::Encoder::PP->new('example.gif', $w, $h, $PALETTE, 4, 0, $ti);
 $gif or die("fail to open gif");
 say 'opened';
+my $unscaled;
+vec($unscaled, 256-1, 8) = 0;
 for my $frame (@imdata) {
-    $gif->{'frame'} = pack('C256', @$frame);
+    if($scale != 1) {
+        $unscaled = pack('C256', @$frame);
+        if( ! GIF::Encoder::PP::scale($unscaled, 16, 16, $scale, \$gif->{'frame'})) {
+            die("failed to scale");
+        }
+    }
+    else {
+        $gif->{'frame'} = pack('C256', @$frame);
+    }
+
+    #$gif->{'frame'} = pack('C256', @$frame);
     #say "imdata";
     #say "--------------------------------------";
     #Dump($gif->{'frame'});

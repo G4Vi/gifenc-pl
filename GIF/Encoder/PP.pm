@@ -197,10 +197,11 @@ sub new {
         #'frame' => '',
         #'back' => '',
         'partial' => 0,
-        'buffer' => ''        
+        #'buffer' => ''
     };
     vec($gif->{'frame'}, $width*$height-1, 8) = 0;
-    vec($gif->{'back'}, $width*$height-1, 8) = 0;      
+    vec($gif->{'back'}, $width*$height-1, 8) = 0;
+    vec($gif->{'buffer'}, 0xFF-1, 8) = 0;
     open($gif->{'fh'}, '>', $filename) or return undef;
     bless $gif, $class;
 
@@ -264,7 +265,65 @@ sub finish {
     print {$gif->{'fh'}} ';';
 }
 
+# helper functions
+sub expand_frame {
+    my ($data, $srcbitsperpixel, $desiredbitsperpixel) = @_;
+    (length($data) % $srcbitsperpixel) == 0 or return undef;
+    my $count = length($data) / $srcbitsperpixel;
+    my $dest;
+    vec($dest, $count-1, $desiredbitsperpixel) = 0;
+    for(my $i = 0; $i < $count; $i++) {
+        vec($dest, $i, $desiredbitsperpixel) = vec($data, $i, $srcbitsperpixel);
+    }
+    return $dest;
+}
 
+sub _scaleUp {
+    my ($dest, $data, $w, $h, $times) = @_;
+    my $desti = 0;
+    for(my $y = 0; $y < $h; $y++) {
+        my $ystop = $desti + ($w * $times * $times);
+        while($desti < $ystop) {
+            for(my $x = 0; $x < $w; $x++) {
+                my $stop = $desti + $times;
+                while($desti < $stop) {
+                    vec($$dest, $desti++, 8) = vec($data, ($y * $w) + $x, 8);
+                }
+            }
+        }
+    }
 
+    return 1;
+}
+
+sub _scaleDown {
+    my ($dest, $data, $w, $h, $every) = @_;
+    my $desti = 0;
+    for(my $y = 0; $y < $h; $y += $every) {
+        for(my $x = 0; $x < $w; $x += $every) {
+            vec($$dest, $desti++, 8) = vec($data, ($y * $w) + $x, 8);
+        }
+    }
+
+    return 1;
+}
+
+sub scale {
+    my ($data, $w, $h, $times, $dest) = @_;
+    ($times == int($times)) && ($times != 0) or return undef;
+    my ($neww, $newh);
+    if($times > 0) {
+        $neww = $w * $times;
+        $newh = $h * $times;
+        return _scaleUp($dest, $data, $w, $h, $times);
+    }
+    else {
+        my $div = -$times;
+        $neww = $w / $div;
+        $newh = $h / $div;
+        ($neww == int($neww)) && ($newh == int($newh)) or return undef;
+        return _scaleDown($dest, $data, $w, $h, -$times);
+    }
+}
 
 1;
