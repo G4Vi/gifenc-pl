@@ -94,9 +94,9 @@ $calcscale = 1/(-$calcscale) if($calcscale < 0);
 my $w = 16 * $calcscale;
 my $h = 16 * $calcscale;
 
-my $gif = GIF::Encoder::PP->new('example.gif', $w, $h, $PALETTE, 4, 0, $ti);
+my $gif = GIF::Encoder::PP->new(undef, $w, $h, $PALETTE, 4, 0, $ti);
 $gif or die("fail to open gif");
-say 'opened';
+warn('opened');
 my $unscaled;
 vec($unscaled, 256-1, 8) = 0;
 for my $frame (@imdata) {
@@ -124,4 +124,4 @@ for my $frame (@imdata) {
 
 
 $gif->finish();
-say 'wrote gif';
+warn('wrote gif');

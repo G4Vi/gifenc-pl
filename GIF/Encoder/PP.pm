@@ -5,9 +5,6 @@ package GIF::Encoder::PP;
 use strict;
 use warnings;
 
-use feature 'say';
-use Devel::Peek;
-
 sub write_num {
     my ($fh, $val) = @_;
     print $fh pack('v', $val);
@@ -202,7 +199,13 @@ sub new {
     vec($gif->{'frame'}, $width*$height-1, 8) = 0;
     vec($gif->{'back'}, $width*$height-1, 8) = 0;
     vec($gif->{'buffer'}, 0xFF-1, 8) = 0;
-    open($gif->{'fh'}, '>', $filename) or return undef;
+    if($filename) {
+        open($gif->{'fh'}, '>', $filename) or return undef;
+    }
+    else {
+        $gif->{'fh'} = *STDOUT;
+    }
+
     bless $gif, $class;
 
     print {$gif->{'fh'}} "GIF89a";
@@ -269,7 +272,7 @@ sub finish {
 sub expand_frame {
     my ($data, $srcbitsperpixel, $desiredbitsperpixel) = @_;
     (length($data) % $srcbitsperpixel) == 0 or return undef;
-    my $count = length($data) / $srcbitsperpixel;
+    my $count = (length($data) * 8) / $srcbitsperpixel;
     my $dest;
     vec($dest, $count-1, $desiredbitsperpixel) = 0;
     for(my $i = 0; $i < $count; $i++) {
