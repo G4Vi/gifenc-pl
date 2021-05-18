@@ -92,9 +92,16 @@ my $gif = GIF::Encoder::PP->new('example.gif', 16, 16, $PALETTE, 4, 0, $ti);
 $gif or die("fail to open gif");
 say 'opened';
 for my $frame (@imdata) {
-    my $IMDATA = pack('C256', @$frame);
-    $gif->{'frame'} = $IMDATA;
+    $gif->{'frame'} = pack('C256', @$frame);
+    #say "imdata";
+    #say "--------------------------------------";
+    #Dump($gif->{'frame'});
+    #Dump($gif->{'back'});
+    #say "--------------------------------------";
     $gif->add_frame(32);
+    #say "--------------------------------------";
+    #Dump($gif->{'frame'});
+    #Dump($gif->{'back'});
 }
 
 
