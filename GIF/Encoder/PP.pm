@@ -167,7 +167,7 @@ sub add_graphics_control_extension {
     my ($gif, $d) = @_;
     my $out = "!\xF9\x04\x04";
     if($gif->{'transparent_index'} != -1) {
-        vec($out, 3, 8) |= 0x1;
+        vec($out, 3, 8) = (0x1 | 0x8); # transparent color flag and RTB
     }
     print {$gif->{'fh'}} $out;
     write_num($gif->{'fh'}, $d);
@@ -247,7 +247,8 @@ sub add_frame {
         add_graphics_control_extension($gif, $delay);
     }        
     my ($w, $h, $x, $y);
-    if ($gif->{'nframes'} == 0) {
+    # always encode the whole image at start and when a transparent color is involved
+    if (($gif->{'nframes'} == 0) || ($gif->{'transparent_index'} != -1)) {
         $w = $gif->{'w'};
         $h = $gif->{'h'};
         $x = $y = 0;
