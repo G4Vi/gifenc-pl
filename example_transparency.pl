@@ -8,14 +8,10 @@ use lib "$FindBin::Bin";
 use GIF::Encoder::PP;
 use Devel::Peek;
 
-
-#define MIN(a,b) 
-
 sub MIN {
     my ($a, $b) = @_;
     return ((($a)<($b))?($a):($b));
 }
-
 
 sub add_frame {
     my ($gif, $delay) = @_;
@@ -34,7 +30,7 @@ sub add_frame {
 	$gif->add_frame($delay);
 }
 
-scalar(@ARGV) == 1 or die("usage: $0 <file.gif> <disposal>");
+scalar(@ARGV) == 1 or die("usage: $0 <file.gif>");
 
 my $gif = GIF::Encoder::PP->new($ARGV[0], 100, 100, pack('CCCCCC', 0xFF, 0xFF, 0xFF, 0xDA, 0x09, 0xFF), 1, 0, 0);
 my $frameindex = 0;

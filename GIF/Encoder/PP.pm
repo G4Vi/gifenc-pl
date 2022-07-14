@@ -83,9 +83,14 @@ sub end_key {
     $gif->{'offset'} = $gif->{'partial'} = 0;
 }
 
-sub put_image {
-    my ($gif, $w, $h, $x, $y) = @_;
+use constant {
+    FRAME_CUR  => 0,
+    FRAME_LAST => 1
+};
 
+sub put_image {
+    my ($gif, $frameindex, $w, $h, $x, $y) = @_;
+    my $frameref = ($frameindex == FRAME_CUR) ? \$gif->{'frame'} : \$gif->{'back'};
     my $degree = 1 << $gif->{'depth'};
 
     print {$gif->{'fh'}} ",";
@@ -103,7 +108,7 @@ sub put_image {
 
     for (my $i = $y; $i < $y+$h; $i++) {
         for (my $j = $x; $j < $x+$w; $j++) {            
-            my $pixel = vec($gif->{'frame'}, $i*$gif->{'w'}+$j, 8) & ($degree - 1);
+            my $pixel = vec($$frameref, $i*$gif->{'w'}+$j, 8) & ($degree - 1);
             my $child = $node->{'children'}[$pixel];
             if ($child) {
                 $node = $child;
@@ -163,11 +168,18 @@ sub get_bbox {
     }
 }
 
+use constant {
+    DM_UNSPEC => 0 << 2,
+    DM_DND    => 1 << 2, # Do Not Dispose
+    DM_RTB    => 2 << 2, # Restore To Background (clear pixel)
+    DM_RTP    => 3 << 2  # Restore To Previous (not currently used)
+};
+
 sub add_graphics_control_extension {
-    my ($gif, $d) = @_;
-    my $out = "!\xF9\x04\x04";
+    my ($gif, $d, $dm) = @_;
+    my $out = "!\xF9\x04".pack('C', $dm);
     if($gif->{'transparent_index'} != -1) {
-        vec($out, 3, 8) = (0x1 | 0x8); # transparent color flag and RTB
+        vec($out, 3, 8) |= 0x1; # transparent color flag
     }
     print {$gif->{'fh'}} $out;
     write_num($gif->{'fh'}, $d);
@@ -188,6 +200,7 @@ sub new {
         'h' => $height,
         'depth' => 0,        
         'transparent_index' => $transparent_index,
+        'has_unencoded_frame' => 0,
         'fd' => undef,
         'offset' => 0,
         'nframes' => 0,
@@ -240,15 +253,80 @@ sub new {
 	return $gif;
 }
 
+sub add_frame_with_transparency {
+    my ($gif, $has_new_frame) = @_;
+    $gif->{'has_unencoded_frame'} = 0;
+    my $dm = DM_DND;
+    my $w = $gif->{'unencoded_w'};
+    my $h = $gif->{'unencoded_h'};
+    my $x = $gif->{'unencoded_x'};
+    my $y = $gif->{'unencoded_y'};
+    if($has_new_frame)
+    {
+        # if the new frame has any new transparent pixels (not already transparent) RTB is required
+        for(my $i = 0; $i < $gif->{'h'}; $i++)
+        {
+            for(my $j = 0; $j < $gif->{w}; $j++)
+            {
+                if((vec($gif->{frame}, ($i*$gif->{w}) + $j, 8) == $gif->{'transparent_index'}) &&
+                (vec($gif->{back}, ($i*$gif->{w}) + $j, 8) != $gif->{'transparent_index'})) {
+                    $dm = DM_RTB;
+                    # adjust the BB so the pixel will be cleared on RTB
+                    if($i < $y)
+                    {
+                        my $delta = $y-$i;
+                        $y = $i;
+                        $h += $delta;
+                    }
+
+                    if($j < $x)
+                    {
+                        my $delta = $x-$j;
+                        $x = $j;
+                        $w += $delta;
+                    }
+
+                    if($i >= ($y+$gif->{h}))
+                    {
+                        $h += ($i-($y+$gif->{h})+1);
+                    }
+
+                    if($j >= ($x+$gif->{w}))
+                    {
+                        $w += ($j-($x+$gif->{w})+1);
+                    }
+                }
+            }
+        }
+
+    }
+    add_graphics_control_extension($gif, $gif->{'unencoded_delay'}, $dm);
+    put_image($gif, FRAME_LAST, $w, $h, $x, $y);
+
+    if($dm == DM_RTB)
+    {
+        # RTB our internal model, used by get_bbox
+        for(my $i = $y; $i < ($y+$h); $i++)
+        {
+            for(my $j = $x; $j < ($x+$w); $j++)
+            {
+                vec($gif->{back}, $i*$gif->{w} + $j, 8) = $gif->{'transparent_index'};
+            }
+        }
+    }
+}
+
 sub add_frame {
     my ($gif, $delay) = @_;
 
-    if ($delay || ($gif->{'transparent_index'} != -1)) {
-        add_graphics_control_extension($gif, $delay);
-    }        
+    # encode an old frame if needed
+    if($gif->{'has_unencoded_frame'}) {
+        add_frame_with_transparency($gif, 1);
+    }
+
+    # determine the changed area since the last frame
     my ($w, $h, $x, $y);
-    # always encode the whole image at start and when a transparent color is involved
-    if (($gif->{'nframes'} == 0) || ($gif->{'transparent_index'} != -1)) {
+    if (($gif->{nframes} == 0)) {
         $w = $gif->{'w'};
         $h = $gif->{'h'};
         $x = $y = 0;
@@ -257,7 +335,24 @@ sub add_frame {
         $w = $h = 1;
         $x = $y = 0;
     }
-    put_image($gif, $w, $h, $x, $y);
+
+    # encode the frame now if transparency isn't used at all
+    if($gif->{'transparent_index'} == -1) {
+        if($delay) {
+            add_graphics_control_extension($gif, $delay, DM_DND);
+        }
+        put_image($gif, FRAME_CUR, $w, $h, $x, $y);
+    }
+    else {
+        $gif->{'has_unencoded_frame'} = 1;
+        $gif->{'unencoded_w'} = $w;
+        $gif->{'unencoded_h'} = $h;
+        $gif->{'unencoded_x'} = $x;
+        $gif->{'unencoded_y'} = $y;
+        $gif->{'unencoded_delay'} = $delay;
+    }
+
+    # move on to the next frame, swap the buffers
     $gif->{'nframes'}++;
     my $tmp = $gif->{'back'};
     $gif->{'back'} = $gif->{'frame'};
@@ -266,6 +361,10 @@ sub add_frame {
 
 sub finish {
     my ($gif) = @_;
+    # encode an old frame if needed
+    if($gif->{'has_unencoded_frame'}) {
+        add_frame_with_transparency($gif, 0);
+    }
     print {$gif->{'fh'}} ';';
 }
 
