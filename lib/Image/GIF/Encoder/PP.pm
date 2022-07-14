@@ -1,7 +1,6 @@
-package GIF::Encoder::PP;
-
-# Copyright (c) 2021 Gavin Hayes, see LICENSE in the root of the project
-
+package Image::GIF::Encoder::PP;
+# Copyright (c) 2021-2022 Gavin Hayes, see LICENSE in the root of the project
+use version; our $VERSION = version->declare("v0.1.0");
 use strict;
 use warnings;
 
@@ -359,13 +358,17 @@ sub add_frame {
     $gif->{'frame'} = $tmp;
 }
 
-sub finish {
+sub _finish {
     my ($gif) = @_;
     # encode an old frame if needed
     if($gif->{'has_unencoded_frame'}) {
         add_frame_with_transparency($gif, 0);
     }
     print {$gif->{'fh'}} ';';
+}
+
+sub DESTROY {
+    $_[0]->_finish();
 }
 
 # helper functions
@@ -430,3 +433,91 @@ sub scale {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Image::GIF::Encoder::PP - Pure perl GIF encoding
+
+=head1 SYNOPSIS
+
+    use Image::GIF::Encoder::PP;
+    my $palette = pack('CCCCCC', 0xFF, 0xFF, 0xFF, 0xDA, 0x09, 0xFF);               # Pack the RGB color pallete
+    my $gif = Image::GIF::Encoder::PP->new('out.gif', 200, 200, $palette, 1, 0, 0); # create a 200x200 infinitely looping 1 bit color palette transparent gif
+    $gif->{'frame'} = pack('x10000');                                               # set the pixels of the frame to palette index 0 (transparent in this case)
+    Image::GIF::Encoder::PP::scale($frame, 100, 100, 2, \$destframe);               # scale a 100x100 frame by 2 and store in $destframe
+    $gif->add_frame(5);                                                             # add a frame with a 5 ms delay
+    undef $gif;                                                                     # finish writing to gif
+
+=head1 CONSTRUCTOR
+
+=head2 $gif = Image::GIF::Encoder::PP->new($filename, $width, $height, $palette, $depth, $loop, $transparent_index)
+
+Constructs a new GIF object.
+
+If C<$filename> is defined, a file will be created, otherwise it will
+write the image to STDOUT.
+
+C<$palette> is a binary array of RGB24 its length should correspond to
+bitdepth C<$depth>. 2 colors (6 bytes) for a bitdepth of 1, 4 colors,
+(12 bytes) for a bitdepth of 2, etc.
+
+C<$loop> controls how many times to loop, 0 loops infinitely, 1 or a
+negative value should play once with most players.
+
+C<$transparent_index> marks a color index to show as transparent
+instead of that color. Use -1 if there is not transparent index.
+
+=head1 ADDING IMAGE DATA
+
+Set C<< $gif->{'frame'} >> to your binary array of pixels, one byte per
+pixel corresponding to a palette index.
+
+For example to set a 100x100 frame to the first color index
+C<< $gif->{'frame'} = pack('x10000') >>
+
+=head2 $gif->add_frame($delay)
+
+Adds the image data from C<< $gif->{'frame'} >> to the GIF where
+C<$delay> is the number of milliseconds between each frame.
+
+=head1 WRAPPING UP
+
+=head2 undef $gif
+
+The final image data is flushed when the C<$gif> object is DESTROYed.
+
+=head1 SCALING IMAGES
+
+=head2 Image::GIF::Encoder::PP::scale($frame, $w, $h, $times, \$destframe)
+
+Scales a C<$w>xC<$h> frame by C<$times> and stores it in the
+C<$destframe> buffer. If you wish to make a scaled gif, be sure to
+adjust the C<$width> and C<$height> appropriately. For example 100x100
+frames scaled by 2 needs a 200x200 C<$gif>.
+
+=head1 AUTHOR
+
+Gavin Hayes, C<< <gahayes at cpan.org> >>
+
+=head1 SUPPORT AND DOCUMENTATION
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc Image::GIF::Encoder::PP
+
+Support and bug reports can be found at the repository L<https://github.com/G4Vi/gifenc-pl>
+
+=head1 LICENSE AND COPYRIGHT
+
+This software is copyright (c) 2021-2022 by Gavin Hayes.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
