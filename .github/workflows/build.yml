@@ -1,0 +1,83 @@
+
+# GitHub Actions CI script for Image-GIF-Encoder-PP
+# (C) 2022 Gavin Hayes
+
+name: Build Image-GIF-Encoder-PP
+on:   [ push, pull_request ]
+
+jobs:
+  build-linux:
+    name:    Build Image-GIF-Encoder-PP
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fetch repo and submodules
+      uses: actions/checkout@v3
+      with:
+        path: 'gifenc-pl'
+    - name: Install Perl
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: '5.36'
+        working-directory: gifenc-pl
+    - name: Test in-tree
+      run: |
+        cd gifenc-pl
+        prove -lv t
+        rm t/*.gif
+    - name: Build gifenc-pl
+      run: |
+        cd gifenc-pl
+        perl Makefile.PL
+        make manifest
+        make dist
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Image-GIF-Encoder-PP
+        path: gifenc-pl/Image-GIF-Encoder-PP-*.tar.gz
+
+  test-release:
+    needs:   [ build-linux ]
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        perl: [ '5.36', '5.34', '5.20' ]
+    runs-on: ${{ matrix.os }}
+    name: Test release with ${{ matrix.perl }} on ${{ matrix.os }}
+    steps:
+    - name: Fetch build artifacts
+      uses: actions/download-artifact@v3
+    - name: Rename to unversioned name
+      run: mv Image-GIF-Encoder-PP/*.tar.gz Image-GIF-Encoder-PP.tar.gz
+    - name: Install Perl and Image-GIF-Encoder-PP using cpanm
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: ${{ matrix.perl }}
+        install-modules-with: cpanm
+        install-modules: Image-GIF-Encoder-PP.tar.gz
+    - name: Try loading Image::GIF::Encoder::PP
+      run: |
+        perl -MImage::GIF::Encoder::PP  -e 'print $Image::GIF::Encoder::PP::VERSION . "\n";'
+    - name: Archive CPAN logs
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: cpan_log
+        path: /home/runner/.cpanm/work/*/build.log
+
+  create-release:
+    name:    Create release
+    runs-on: ubuntu-latest
+    needs:   [ build-linux, test-release ]
+    steps:
+    - name: Fetch build artifacts
+      if:   ${{ github.ref_type == 'tag' }}
+      uses: actions/download-artifact@v3
+    - name: Publish release
+      if:   ${{ github.ref_type == 'tag' }}
+      uses: softprops/action-gh-release@v1
+      with:
+        fail_on_unmatched_files: true
+        draft: true
+        files: |
+          Image-GIF-Encoder-PP/Image-GIF-Encoder-PP-*.tar.gz

@@ -77,7 +77,6 @@ sub generate_flag_gif {
     
     my $gif = Image::GIF::Encoder::PP->new($outputfilename, $w, $h, $PALETTE, 4, 0, $ti);
     $gif or die("fail to open gif");
-    warn('opened');
     my $unscaled;
     vec($unscaled, 256-1, 8) = 0;
     for my $frame (@imdata) {

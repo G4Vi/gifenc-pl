@@ -63,3 +63,6 @@
 
 # Avoid MYMETA files
 ^MYMETA\.
+
+# avoid CI
+^\.github

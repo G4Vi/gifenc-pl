@@ -492,7 +492,7 @@ C<$delay> is the number of milliseconds between each frame.
 
 The final image data is flushed when the C<$gif> object is DESTROYed.
 
-=head1 SCALING IMAGES
+=head1 UTILITY FUNCTIONS
 
 =head2 Image::GIF::Encoder::PP::scale($frame, $w, $h, $times, \$destframe)
 
@@ -500,6 +500,12 @@ Scales a C<$w>xC<$h> frame by C<$times> and stores it in the
 C<$destframe> buffer. If you wish to make a scaled gif, be sure to
 adjust the C<$width> and C<$height> appropriately. For example 100x100
 frames scaled by 2 needs a 200x200 C<$gif>.
+
+=head2 Image::GIF::Encoder::PP::expand_frame($frame, $srcbitsperpixel, $desiredbitsperpixel)
+
+Converts a frame from C<$srcbitsperpixel> to C<$desiredbitsperpixel>
+and returns the resulting frame. For creating a gif with
+Image::GIF::Encoder::PP C<$desiredbitsperpixel> should be 8.
 
 =head1 AUTHOR
 
