@@ -4,7 +4,6 @@
 
 use strict;
 use warnings;
-use feature 'say';
 use FindBin;
 use Image::GIF::Encoder::PP;
 use Test::Simple tests => 2;
