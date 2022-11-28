@@ -65,10 +65,44 @@ jobs:
         name: cpan_log
         path: /home/runner/.cpanm/work/*/build.log
 
+  test-manual-install:
+    name: test manual install
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ['5.6', '5.8.9', '5.10', '5.36']
+    steps:
+    - name: Fetch repo
+      uses: actions/checkout@v3
+      with:
+        path: 'gifenc-pl'
+    - name: Install Perl
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: ${{ matrix.version }}
+        install-modules-with: cpanm
+        install-modules: B::Keywords HTTP::Tiny Test::Pod::LinkCheck::Lite
+    - name: Setup for tests
+      run: |
+        cd gifenc-pl
+        cpanm --installdeps --notest .
+    - name: Run tests
+      run: |
+        cd gifenc-pl
+        perl Makefile.PL
+        make
+        make test
+    - name: Archive CPAN logs
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: cpan_log
+        path: /home/runner/.cpanm/work/*/build.log
+
   create-release:
     name:    Create release
     runs-on: ubuntu-latest
-    needs:   [ build-linux, test-release ]
+    needs:   [ build-linux, test-release, test-manual-install ]
     steps:
     - name: Fetch build artifacts
       if:   ${{ github.ref_type == 'tag' }}

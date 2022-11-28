@@ -1,6 +1,6 @@
 package Image::GIF::Encoder::PP;
 # Copyright (c) 2021-2022 Gavin Hayes, see LICENSE in the root of the project
-use version; our $VERSION = version->declare("v0.1.0");
+use version 0.77; our $VERSION = qv(v0.1.0);
 use strict;
 use warnings;
 
