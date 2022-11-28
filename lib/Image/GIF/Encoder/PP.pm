@@ -203,10 +203,10 @@ sub new {
         'fd' => undef,
         'offset' => 0,
         'nframes' => 0,
-        #'frame' => '',
-        #'back' => '',
+        'frame' => '',
+        'back' => '',
         'partial' => 0,
-        #'buffer' => ''
+        'buffer' => ''
     };
     vec($gif->{'frame'}, $width*$height-1, 8) = 0;
     vec($gif->{'back'}, $width*$height-1, 8) = 0;
