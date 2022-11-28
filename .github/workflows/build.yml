@@ -78,7 +78,7 @@ jobs:
       with:
         path: 'gifenc-pl'
     - name: Install Perl
-      uses: shogo82148/actions-setup-perl@21e460f5da114da99c787c9acc26dc64b1f73238
+      uses: shogo82148/actions-setup-perl@releases/v1
       with:
         perl-version: ${{ matrix.version }}
         enable-modules-cache: false
