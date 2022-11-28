@@ -70,15 +70,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        #version: ['5.6', '5.8.9', '5.10', '5.36'] # commented until shogo82148/actions-setup-perl@v1 bug is fixed
-        version: ['5.10', '5.36']
+        version: ['5.6', '5.8.9', '5.10', '5.36'] # commented until shogo82148/actions-setup-perl@v1 bug is fixed
+        #version: ['5.10', '5.36']
     steps:
     - name: Fetch repo
       uses: actions/checkout@v3
       with:
         path: 'gifenc-pl'
     - name: Install Perl
-      uses: shogo82148/actions-setup-perl@v1
+      uses: shogo82148/actions-setup-perl@21e460f5da114da99c787c9acc26dc64b1f73238
       with:
         perl-version: ${{ matrix.version }}
         enable-modules-cache: false
