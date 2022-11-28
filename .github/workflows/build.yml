@@ -81,7 +81,7 @@ jobs:
       with:
         perl-version: ${{ matrix.version }}
         install-modules-with: cpanm
-        install-modules: B::Keywords HTTP::Tiny Test::Pod::LinkCheck::Lite
+#        install-modules: B::Keywords HTTP::Tiny Test::Pod::LinkCheck::Lite
     - name: Setup for tests
       run: |
         cd gifenc-pl
