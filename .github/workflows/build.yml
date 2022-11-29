@@ -81,9 +81,8 @@ jobs:
       uses: shogo82148/actions-setup-perl@v1
       with:
         perl-version: ${{ matrix.version }}
-        enable-modules-cache: false
-#        install-modules-with: cpanm
-#        install-modules: B::Keywords HTTP::Tiny Test::Pod::LinkCheck::Lite
+        install-modules-with: cpanm
+        install-modules: version@0.77
     - name: Setup for tests
       run: |
         cd gifenc-pl
