@@ -87,7 +87,7 @@ jobs:
     - name: Setup for tests
       run: |
         cd gifenc-pl
-        cpanm version
+        cpan version
     - name: Run tests
       run: |
         cd gifenc-pl
