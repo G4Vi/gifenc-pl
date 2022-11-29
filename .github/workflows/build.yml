@@ -93,6 +93,15 @@ jobs:
         perl Makefile.PL
         make
         make install
+    - name: Install MIME::Base64
+      run: |
+        wget https://cpan.metacpan.org/authors/id/C/CA/CAPOEIRAB/MIME-Base64-3.16.tar.gz
+        tar xvf MIME-Base64-3.16.tar.gz
+        rm MIME-Base64-3.16.tar.gz
+        cd MIME-*
+        perl Makefile.PL
+        make
+        make install
     - name: Run tests
       run: |
         cd gifenc-pl
