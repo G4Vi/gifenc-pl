@@ -16,6 +16,9 @@ my %WriteMakefileArgs = (
     PREREQ_PM => {
         'version'    => '0.77',
     },
+    TEST_REQUIRES => {
+        'MIME::Base64' => '0'
+    },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => ['Image-GIF-Encoder-PP-*', 't/*.gif']},
     META_MERGE => {

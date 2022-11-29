@@ -70,9 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: ['5.6', '5.8.9', '5.10', '5.36'] # commented until shogo82148/actions-setup-perl@v1 bug is fixed
-        #version: ['5.8.9', '5.10', '5.36'] # commented until shogo82148/actions-setup-perl@v1 bug is fixed
-        #version: ['5.10', '5.36']
+        version: ['5.6', '5.8.9', '5.10', '5.36']
     steps:
     - name: Fetch repo
       uses: actions/checkout@v3
@@ -82,8 +80,7 @@ jobs:
       uses: shogo82148/actions-setup-perl@v1
       with:
         perl-version: ${{ matrix.version }}
-        install-modules-with: cpanm
-        #install-modules: version
+    # cpanm doesn't work on 5.6, manually download and install deps
     - name: Install version
       run: |
         wget https://cpan.metacpan.org/authors/id/L/LE/LEONT/version-0.9929.tar.gz
