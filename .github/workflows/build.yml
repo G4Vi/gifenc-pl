@@ -89,7 +89,7 @@ jobs:
         wget https://cpan.metacpan.org/authors/id/L/LE/LEONT/version-0.9929.tar.gz
         tar xvf version-*
         rm version-*.tar.gz
-        cd version
+        cd version*
         perl Makefile.PL
         make
         make install
