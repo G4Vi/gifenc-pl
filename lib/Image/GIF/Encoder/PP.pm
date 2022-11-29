@@ -82,10 +82,8 @@ sub end_key {
     $gif->{'offset'} = $gif->{'partial'} = 0;
 }
 
-use constant {
-    FRAME_CUR  => 0,
-    FRAME_LAST => 1
-};
+use constant FRAME_CUR  => 0;
+use constant FRAME_LAST => 1;
 
 sub put_image {
     my ($gif, $frameindex, $w, $h, $x, $y) = @_;
