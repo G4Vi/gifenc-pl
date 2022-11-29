@@ -82,7 +82,7 @@ jobs:
       with:
         perl-version: ${{ matrix.version }}
         install-modules-with: cpanm
-        install-modules: version@0.77
+        install-modules: version
     - name: Setup for tests
       run: |
         cd gifenc-pl
