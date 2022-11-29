@@ -84,10 +84,15 @@ jobs:
         perl-version: ${{ matrix.version }}
         install-modules-with: cpanm
         #install-modules: version
-    - name: Setup for tests
+    - name: Install version
       run: |
-        cd gifenc-pl
-        cpan version
+        wget https://cpan.metacpan.org/authors/id/L/LE/LEONT/version-0.9929.tar.gz
+        tar xvf version-*
+        rm version-*.tar.gz
+        cd version
+        perl Makefile.PL
+        make
+        make install
     - name: Run tests
       run: |
         cd gifenc-pl
