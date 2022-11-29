@@ -165,12 +165,10 @@ sub get_bbox {
     }
 }
 
-use constant {
-    DM_UNSPEC => 0 << 2,
-    DM_DND    => 1 << 2, # Do Not Dispose
-    DM_RTB    => 2 << 2, # Restore To Background (clear pixel)
-    DM_RTP    => 3 << 2  # Restore To Previous (not currently used)
-};
+use constant DM_UNSPEC => 0 << 2;
+use constant DM_DND    => 1 << 2; # Do Not Dispose
+use constant DM_RTB    => 2 << 2; # Restore To Background (clear pixel)
+use constant DM_RTP    => 3 << 2;  # Restore To Previous (not currently used)
 
 sub add_graphics_control_extension {
     my ($gif, $d, $dm) = @_;
